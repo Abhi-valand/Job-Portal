@@ -1,0 +1,54 @@
+import React from 'react'
+import { Button } from './ui/button'
+import { Bookmark } from 'lucide-react'
+import { Avatar, AvatarImage } from './ui/avatar'
+import { Badge } from './ui/badge'
+import { useNavigate } from 'react-router'
+
+
+const Job = () => {
+    const navigate = useNavigate()
+    const jobId = "nvjnsdvnknkvdnvsfvdz"
+    return (
+        <div className='p-5 rounded-md shadow-lg bg-white border border-gray-200'>
+            <div className='flex items-center justify-between'>
+                <p className='text-sm text-gray-500'>2 days ago</p>
+                <Button variant="outline" className="rounded-full" size="icon"><Bookmark /></Button>
+            </div>
+
+            <div className='flex items-center gap-2 my-2'>
+
+                <Button className="p-6" variant="outline" size="icon">
+                    <Avatar>
+                        <AvatarImage src="https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg" />
+                    </Avatar>
+                </Button>
+                <div>
+                    <h1 className='font-medium text-lg'>Company Name</h1>
+                    <p className='text-sm text-gray-500'>India</p>
+                </div>
+            </div>
+            <div>
+                <h1 className='font-bold text-lg my-2'>Title</h1>
+                <p className='text-sm text-gray-600'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Vel expedita consequuntur architecto vero quod atque officia dolorum quaerat dolorem at.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+                <Badge variant="secondary" className="text-blue-700 bg-blue-100">
+                    12 Positions
+                </Badge>
+                <Badge variant="secondary" className="text-[#F83002] bg-red-100">
+                    Part Time
+                </Badge>
+                <Badge variant="secondary" className="text-[#7209b7] bg-purple-100">
+                    24 LPA
+                </Badge>
+            </div>
+            <div className='flex items-center gap-4 mt-4'>
+                <Button onClick={()=> navigate(`/description/${jobId}`)} variant="outline">Details</Button>
+                <Button className="bg-[#880bdb] hover:bg-[#7209b7]">Save For Later</Button>
+            </div>
+        </div>
+    )
+}
+
+export default Job
