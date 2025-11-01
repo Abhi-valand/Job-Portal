@@ -1,32 +1,40 @@
 import { User } from "../models/user.model.js"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import getDataUri from "../utils/dataUri.js"
+import cloudinary from "../utils/cloudiNary.js"
 
-const register = async(req,res) => {
+const register = async (req, res) => {
     try {
-        const {fullname,email,phoneNumber,password,role} = req.body
-        if(!fullname || !email || !phoneNumber || !password || !role){
+        const { fullname, email, phoneNumber, password, role } = req.body
+        if (!fullname || !email || !phoneNumber || !password || !role) {
             return res.status(400).json({
-                message:"All fields are required",
+                message: "All fields are required",
                 success: false
             })
         }
-        const user = await User.findOne({email})
-        if(user){
+        const file = req.file;
+        const fileUri = getDataUri(file)
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content)
+        const user = await User.findOne({ email })
+        if (user) {
             return res.status(400).json({
-                message:"User already exist",
-                success:false
+                message: "User already exist",
+                success: false
             })
         }
 
-        const hashedPassword = await bcrypt.hash(password,10)
+        const hashedPassword = await bcrypt.hash(password, 10)
 
         await User.create({
             fullname,
             email,
             phoneNumber,
-            password : hashedPassword,
-            role
+            password: hashedPassword,
+            role,
+            profile:{
+                profilePhoto:cloudResponse.secure_url
+            }
         })
 
         return res.status(201).json({
@@ -45,7 +53,7 @@ const register = async(req,res) => {
 const login = async (req, res) => {
     try {
         const { email, password, role } = req.body;
-        
+
         if (!email || !password || !role) {
             return res.status(400).json({
                 message: "Something is missing",
@@ -75,10 +83,10 @@ const login = async (req, res) => {
         };
 
         const tokenData = {
-            userId : user._id
+            userId: user._id
         }
 
-        const token =  jwt.sign(tokenData,process.env.SECRET_KEY,{expiresIn:'1d'})
+        const token = jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1d' })
 
         user = {
             _id: user._id,
@@ -94,7 +102,7 @@ const login = async (req, res) => {
             user,
             success: true
         })
-        } catch (error) {
+    } catch (error) {
         console.log(error);
         res.status(500).json({
             message: "Internal server error",
@@ -121,10 +129,10 @@ const logout = async (_, res) => {
 const updateProfile = async (req, res) => {
     try {
         const { fullname, email, phoneNumber, bio, skills } = req.body;
-        
+
         const file = req.file;
-        
-        // cloudinary ayega idhar
+        const fileUri = getDataUri(file)
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content)
 
         const skillsArray = skills ? skills.split(",").map(skill => skill.trim()) : [];
 
@@ -138,13 +146,17 @@ const updateProfile = async (req, res) => {
             })
         }
         // updating data
-        if(fullname) user.fullname = fullname
-        if(email) user.email = email
-        if(phoneNumber)  user.phoneNumber = phoneNumber
-        if(bio) user.profile.bio = bio
-        if(skills) user.profile.skills = skillsArray
-      
-        // resume comes later here...
+        if (fullname) user.fullname = fullname
+        if (email) user.email = email
+        if (phoneNumber) user.phoneNumber = phoneNumber
+        if (bio) user.profile.bio = bio
+        if (skills) user.profile.skills = skillsArray
+
+        // resume 
+        if (cloudResponse) {
+            user.profile.resume = cloudResponse.secure_url  //save the cloudinary url
+            user.profile.resumeOriginalName = file.originalname //save the original file name
+        }
 
         await user.save();
 
@@ -158,9 +170,9 @@ const updateProfile = async (req, res) => {
         }
 
         return res.status(200).json({
-            message:"Profile updated successfully.",
+            message: "Profile updated successfully.",
             user,
-            success:true
+            success: true
         })
     } catch (error) {
         console.log(error);

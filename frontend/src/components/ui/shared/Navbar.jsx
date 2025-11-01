@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
     Popover,
     PopoverContent,
@@ -12,11 +12,31 @@ import {
 } from "@/components/ui/avatar";
 import { Button } from "../button";
 import { LogOut, User2 } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
+import axios from "axios";
+import { USER_API_END_POINT } from "@/utils/constant";
+import { setUser } from "@/redux/authSlice";
 
 const Navbar = () => {
     const { user } = useSelector(store => store.auth)
     const location = useLocation();
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+
+    const logOutHandler = async () => {
+        try {
+            const res = await axios.get(`${USER_API_END_POINT}/logout`,{withCredentials:true})
+            if(res.data.success){
+                dispatch(setUser(null))
+                navigate("/")
+                toast.success(res.data.message)
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error(error.response.data.message)
+        }
+    }
 
     const navLinks = [
         { name: "Home", path: "/" },
@@ -29,8 +49,6 @@ const Navbar = () => {
             <div className="flex items-center justify-between mx-auto max-w-7xl h-16 ">
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-2 group">
-
-
                     <h1 className="text-3xl font-extrabold tracking-tight">
                         <span className="text-gray-900 group-hover:text-[#6A38C2] transition-colors duration-300">
                             Job
@@ -82,7 +100,7 @@ const Navbar = () => {
                     <Popover>
                         <PopoverTrigger asChild>
                             <Avatar className="cursor-pointer ring-2 ring-[#6A38C2]/20 hover:ring-[#6A38C2]/40 transition-all">
-                                <AvatarImage src="https://github.com/shadcn.png" />
+                                <AvatarImage src={user?.profile?.profilePhoto}  />
                                 <AvatarFallback>CN</AvatarFallback>
                             </Avatar>
                         </PopoverTrigger>
@@ -90,13 +108,13 @@ const Navbar = () => {
                         <PopoverContent className="w-72 p-4 space-y-4 shadow-lg border-gray-200">
                             <div className="flex items-center gap-3 border-b pb-3">
                                 <Avatar>
-                                    <AvatarImage src="https://github.com/shadcn.png" />
+                                    <AvatarImage src={user?.profile?.profilePhoto} />
                                     <AvatarFallback>CN</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h4 className="font-semibold text-gray-800">Abhi</h4>
+                                    <h4 className="font-semibold text-gray-800">{user?.fullname}</h4>
                                     <p className="text-sm text-gray-500">
-                                        lorem@jobportal.com
+                                        {user?.email}
                                     </p>
                                 </div>
                             </div>
@@ -113,7 +131,7 @@ const Navbar = () => {
                                 <div className="flex items-center gap-2 cursor-pointer hover:text-[#F83002] transition-colors">
                                     <LogOut size={18} />
                                     <Button variant="link" className="p-0 h-auto text-sm text-[#F83002]">
-                                        <Link to="/login">
+                                        <Link onClick={logOutHandler} to="/login">
                                             Log Out
                                         </Link>
                                     </Button>
